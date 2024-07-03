@@ -19,7 +19,6 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.lifecycleScope
 import coil.compose.rememberAsyncImagePainter
-import coil.compose.rememberImagePainter
 import com.example.api.ui.theme.APITheme
 import kotlinx.coroutines.launch
 import retrofit2.Retrofit
@@ -39,17 +38,25 @@ class MainActivity : AppCompatActivity() {
             .build()
             .create(UserService::class.java)
 
+        val serviceEvents = Retrofit.Builder()
+            .baseUrl("http://localhost:8000/api/")
+            .addConverterFactory(MoshiConverterFactory.create())
+            .build()
+            .create(EventService::class.java)
+
         // Use the lifecycle scope to trigger the coroutine
         lifecycleScope.launch {
             try {
                 val users = service.getUsers()
+                val events = serviceEvents.getEvents()
                 // Print the result of the network call to the Logcat
                 Log.d("TAG_", users.toString())
+                Log.d("TAG_EVENTS", events.toString())
                 // Update UI with the fetched data
                 val composeView = findViewById<ComposeView>(R.id.compose_view)
                 composeView.setContent {
                     APITheme {
-                        UserList(users)
+                        MainContent(users, events)
                     }
                 }
             } catch (e: Exception) {
@@ -69,9 +76,29 @@ data class User(
     val following: Int
 )
 
+data class Event(
+    val title: String,
+    val status: String,
+)
+
 interface UserService {
     @GET("users")
     suspend fun getUsers(): List<User>
+}
+
+interface EventService {
+    @Headers("Authorization: Token 1876a0415265139fc3cddca821049590f6bf9544")
+    @GET("events")
+    suspend fun getEvents(): List<Event>
+}
+
+@Composable
+fun MainContent(users: List<User>, events: List<Event>) {
+    Column {
+        UserList(users)
+        Spacer(modifier = Modifier.height(16.dp))
+        EventList(events)
+    }
 }
 
 @Composable
@@ -84,6 +111,27 @@ fun UserList(users: List<User>) {
                 UserItem(user)
             }
         }
+    }
+}
+
+@Composable
+fun EventList(events: List<Event>) {
+    Scaffold(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        LazyColumn(modifier = Modifier.padding(it)) {
+            items(events) { event ->
+                EventItem(event)
+            }
+        }
+    }
+}
+
+
+@Composable
+fun EventItem(event: Event) {
+    Column(modifier = Modifier.padding(8.dp)) {
+        Text(text = "Title ${event.title}", style = MaterialTheme.typography.bodyLarge)
     }
 }
 
@@ -109,4 +157,10 @@ fun UserItem(user: User) {
 @Composable
 fun UserItemPreview() {
     UserItem(User("octocat", 1, "https://avatars.githubusercontent.com/u/583231?v=4", "https://github.com/octocat", 100, 100))
+}
+
+@Preview(showBackground = true)
+@Composable
+fun EventItemPreview() {
+    EventItem(Event("Event title", "published"))
 }
