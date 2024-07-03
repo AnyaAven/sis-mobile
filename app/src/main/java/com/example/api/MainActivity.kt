@@ -10,10 +10,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.tooling.preview.Preview
@@ -31,15 +33,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Create an instance of the UserService using Retrofit
-        val service = Retrofit.Builder()
-            .baseUrl("https://api.github.com/")
-            .addConverterFactory(MoshiConverterFactory.create())
-            .build()
-            .create(UserService::class.java)
-
         val serviceEvents = Retrofit.Builder()
-            .baseUrl("http://localhost:8000/api/")
+            .baseUrl("http://10.0.2.2:8000/api/")
             .addConverterFactory(MoshiConverterFactory.create())
             .build()
             .create(EventService::class.java)
@@ -47,70 +42,50 @@ class MainActivity : AppCompatActivity() {
         // Use the lifecycle scope to trigger the coroutine
         lifecycleScope.launch {
             try {
-                val users = service.getUsers()
-                val events = serviceEvents.getEvents()
+                val eventsResponse = serviceEvents.getEvents()
+                Log.d("TAG_EVENTS_RESPONSE", eventsResponse.toString())
+                val events = eventsResponse.results
                 // Print the result of the network call to the Logcat
-                Log.d("TAG_", users.toString())
+
                 Log.d("TAG_EVENTS", events.toString())
                 // Update UI with the fetched data
                 val composeView = findViewById<ComposeView>(R.id.compose_view)
                 composeView.setContent {
                     APITheme {
-                        MainContent(users, events)
+                        MainContent(events)
                     }
                 }
             } catch (e: Exception) {
                 // Log the exception
-                Log.e("TAG_", "Error fetching users", e)
+                Log.e("TAG_", "Error fetching", e)
             }
         }
     }
 }
 
-data class User(
-    val login: String,
-    val id: Int,
-    val avatar_url: String,
-    val html_url: String,
-    val followers: Int,
-    val following: Int
-)
-
 data class Event(
     val title: String,
-    val status: String,
+    val status: String
 )
 
-interface UserService {
-    @GET("users")
-    suspend fun getUsers(): List<User>
-}
+data class EventResponse(
+    val count: Int,
+    val next: String?,
+    val previous: String?,
+    val results: List<Event>
+)
 
 interface EventService {
     @Headers("Authorization: Token 1876a0415265139fc3cddca821049590f6bf9544")
     @GET("events")
-    suspend fun getEvents(): List<Event>
+    suspend fun getEvents(): EventResponse
 }
 
 @Composable
-fun MainContent(users: List<User>, events: List<Event>) {
+fun MainContent(events: List<Event>) {
     Column {
-        UserList(users)
-        Spacer(modifier = Modifier.height(16.dp))
         EventList(events)
-    }
-}
-
-@Composable
-fun UserList(users: List<User>) {
-    Scaffold(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        LazyColumn(modifier = Modifier.padding(it)) {
-            items(users) { user ->
-                UserItem(user)
-            }
-        }
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
@@ -135,28 +110,15 @@ fun EventItem(event: Event) {
     }
 }
 
+
 @Composable
-fun UserItem(user: User) {
-    Column(modifier = Modifier.padding(8.dp)) {
-        Text(text = "Login: ${user.login}", style = MaterialTheme.typography.bodyLarge)
-        Text(text = "ID: ${user.id}", style = MaterialTheme.typography.bodySmall)
-        Text(text = "URL: ${user.html_url}", style = MaterialTheme.typography.bodySmall)
-        Text(text = "Followers: ${user.followers}", style = MaterialTheme.typography.bodySmall)
-        Text(text = "Following: ${user.following}", style = MaterialTheme.typography.bodySmall)
-        Image(
-            painter = rememberAsyncImagePainter(user.avatar_url),
-            contentDescription = null,
-            modifier = Modifier
-                .size(50.dp)
-                .clip(CircleShape)
+fun Greeting(name: String, modifier: Modifier = Modifier) {
+    Surface(color = Color.Cyan) {
+        Text(
+            text = "Hi, my name is slim shady",
+            modifier = modifier
         )
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun UserItemPreview() {
-    UserItem(User("octocat", 1, "https://avatars.githubusercontent.com/u/583231?v=4", "https://github.com/octocat", 100, 100))
 }
 
 @Preview(showBackground = true)
