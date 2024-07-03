@@ -34,7 +34,7 @@ class MainActivity : AppCompatActivity() {
 
         // Create an instance of the UserService using Retrofit
         val service = Retrofit.Builder()
-            .baseUrl("http://localhost:8000/api/events/")
+            .baseUrl("https://api.github.com/")
             .addConverterFactory(MoshiConverterFactory.create())
             .build()
             .create(UserService::class.java)
@@ -61,18 +61,15 @@ class MainActivity : AppCompatActivity() {
 }
 
 data class User(
-//    val login: String,
-//    val id: Int,
-//    val avatar_url: String,
-//    val html_url: String,
-//    val followers: Int,
-//    val following: Int
-    val title: String,
-    val status: String,
+    val login: String,
+    val id: Int,
+    val avatar_url: String,
+    val html_url: String,
+    val followers: Int,
+    val following: Int
 )
 
 interface UserService {
-    @Headers("Authorization: Token 1876a0415265139fc3cddca821049590f6bf9544")
     @GET("users")
     suspend fun getUsers(): List<User>
 }
@@ -92,35 +89,20 @@ fun UserList(users: List<User>) {
 
 @Composable
 fun UserItem(user: User) {
-//    Column(modifier = Modifier.padding(8.dp)) {
-//        Text(text = "Login: ${user.login}", style = MaterialTheme.typography.bodyLarge)
-//        Text(text = "ID: ${user.id}", style = MaterialTheme.typography.bodySmall)
-//        Text(text = "URL: ${user.html_url}", style = MaterialTheme.typography.bodySmall)
-//        Text(text = "Followers: ${user.followers}", style = MaterialTheme.typography.bodySmall)
-//        Text(text = "Following: ${user.following}", style = MaterialTheme.typography.bodySmall)
-//        Image(
-//            painter = rememberAsyncImagePainter(user.avatar_url),
-//            contentDescription = null,
-//            modifier = Modifier
-//                .size(50.dp)
-//                .clip(CircleShape)
-//        )
-//    }
-
     Column(modifier = Modifier.padding(8.dp)) {
-//        Text(text = "Login: ${user.login}", style = MaterialTheme.typography.bodyLarge)
-//        Text(text = "ID: ${user.id}", style = MaterialTheme.typography.bodySmall)
-//        Text(text = "URL: ${user.html_url}", style = MaterialTheme.typography.bodySmall)
-//        Text(text = "Followers: ${user.followers}", style = MaterialTheme.typography.bodySmall)
-//        Text(text = "Following: ${user.following}", style = MaterialTheme.typography.bodySmall)
-//        Image(
-//            painter = rememberAsyncImagePainter(user.avatar_url),
-//            contentDescription = null,
-//            modifier = Modifier
-//                .size(50.dp)
-//                .clip(CircleShape)
-//        )
-//    }
+        Text(text = "Login: ${user.login}", style = MaterialTheme.typography.bodyLarge)
+        Text(text = "ID: ${user.id}", style = MaterialTheme.typography.bodySmall)
+        Text(text = "URL: ${user.html_url}", style = MaterialTheme.typography.bodySmall)
+        Text(text = "Followers: ${user.followers}", style = MaterialTheme.typography.bodySmall)
+        Text(text = "Following: ${user.following}", style = MaterialTheme.typography.bodySmall)
+        Image(
+            painter = rememberAsyncImagePainter(user.avatar_url),
+            contentDescription = null,
+            modifier = Modifier
+                .size(50.dp)
+                .clip(CircleShape)
+        )
+    }
 }
 
 @Preview(showBackground = true)
