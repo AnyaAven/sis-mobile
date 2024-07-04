@@ -112,10 +112,12 @@ class MainActivity : AppCompatActivity() {
                 is LoginViewModel.LoginState.Loading -> {
                     // Show loading indicator or handle UI state
                 }
+
                 is LoginViewModel.LoginState.Success -> {
                     val token = loginState.token
                     fetchEvents(token)
                 }
+
                 is LoginViewModel.LoginState.Error -> {
 
                     Log.e("TAG_HANDLE_LOGIN_ERROR", "Login failed: ${loginState.error.message}")
@@ -214,7 +216,7 @@ interface EventService {
 fun MainContent(events: List<Event>) {
     Column(modifier = Modifier.fillMaxSize()) {
 //        EventList(events, modifier = Modifier.weight(1f))
-    //    CurricListing(modifier = Modifier.weight(1f))
+        //    CurricListing(modifier = Modifier.weight(1f))
     }
     CurricListing(events)
 }
@@ -233,7 +235,7 @@ fun EventList(events: List<Event>, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun CurricListing(events: List<Event>, modifier: Modifier = Modifier){
+fun CurricListing(events: List<Event>, modifier: Modifier = Modifier) {
     TableScreen(events, modifier)
 }
 
@@ -244,12 +246,12 @@ fun Modifier.bottomBorder(strokeWidth: Dp, color: Color) = composed(
 
         Modifier.drawBehind {
             val width = size.width
-            val height = size.height - strokeWidthPx/2
+            val height = size.height - strokeWidthPx / 2
 
             drawLine(
                 color = color,
                 start = Offset(x = 0f, y = height),
-                end = Offset(x = width , y = height),
+                end = Offset(x = width, y = height),
                 strokeWidth = strokeWidthPx
             )
         }
@@ -271,11 +273,13 @@ fun TableScreen(events: List<Event>, modifier: Modifier = Modifier) {
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .padding(16.dp)) {
+            .padding(16.dp)
+    ) {
         // Here is the header
         item {
-            Row(modifier = modifier
-                .bottomBorder(2.dp, DarkGray)
+            Row(
+                modifier = modifier
+                    .bottomBorder(2.dp, DarkGray)
             ) {
                 TableCell(text = "Date", weight = column1Weight)
                 TableCell(text = "Title", weight = column2Weight)
@@ -295,10 +299,12 @@ fun TableScreen(events: List<Event>, modifier: Modifier = Modifier) {
             val hour = localTime.hour.toString()
             val minutes = localTime.minute.toString()
             val time = "$hour:$minutes"
-            val formattedDate = dayOfWeek + " " + date.monthValue.toString() + "/" + date.dayOfMonth.toString() + " " + time
-            Row(modifier = Modifier
-                .fillMaxWidth()
-                .bottomBorder(1.dp, LightGray)
+            val formattedDate =
+                dayOfWeek + " " + date.monthValue.toString() + "/" + date.dayOfMonth.toString() + " " + time
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .bottomBorder(1.dp, LightGray)
             ) {
                 TableCell(text = formattedDate, weight = column1Weight)
                 TableCell(text = event.title + "\n" + event.description, weight = column2Weight)
