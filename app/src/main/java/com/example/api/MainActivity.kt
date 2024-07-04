@@ -1,8 +1,10 @@
 package com.example.api
 
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.viewModels
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -254,6 +256,7 @@ fun Modifier.bottomBorder(strokeWidth: Dp, color: Color) = composed(
     }
 )
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun TableScreen(events: List<Event>, modifier: Modifier = Modifier) {
     // Just a fake data... a Pair of Int and String
