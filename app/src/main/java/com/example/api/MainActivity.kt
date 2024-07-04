@@ -56,6 +56,7 @@ import androidx.lifecycle.viewModelScope
 import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
+import com.example.api.LoginViewModel.LoginState
 import com.example.api.ui.theme.APITheme
 import kotlinx.coroutines.launch
 import retrofit2.Retrofit
@@ -284,19 +285,26 @@ fun TableScreen(events: List<Event>, modifier: Modifier = Modifier) {
         }
         // Here are all the lines of your table.
         items(events) { event ->
-//            val (id, text) = it
-//            val firstApiFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-            val index = event.start_at.indexOf(".") - 1
-            val date = LocalDateTime.parse(event.start_at.slice(0..index))
-            var dayOfWeek = date.dayOfWeek.toString().lowercase().slice(0..2)
-                .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
-            dayOfWeek = "$dayOfWeek."
-            val localTime = LocalDateTime.parse(event.start_at.slice(0..index))
-            val hour = localTime.hour.toString()
-            val minutes = localTime.minute.toString()
-            val time = "$hour:$minutes"
-            val formattedDate =
-                dayOfWeek + " " + date.monthValue.toString() + "/" + date.dayOfMonth.toString() + " " + time
+            var formattedDate = ""
+            try {
+                val index = event.start_at.indexOf(".") - 1
+                val date = LocalDateTime.parse(event.start_at.slice(0..index))
+                var dayOfWeek = date.dayOfWeek.toString().lowercase().slice(0..2)
+                    .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+                dayOfWeek = "$dayOfWeek."
+                val localTime = LocalDateTime.parse(event.start_at.slice(0..index))
+                val hour = localTime.hour.toString()
+                val minutes = localTime.minute.toString()
+                val time = "$hour:$minutes"
+                formattedDate =
+                    dayOfWeek + " " + date.monthValue.toString() + "/" + date.dayOfMonth.toString() + " " + time
+            } catch (e: Exception) {
+
+                Log.e("TAG_TIME", "Parse time failure $event", e)
+            }
+
+            if(formattedDate == "") formattedDate = "Tue, 6/12 6:15"
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
