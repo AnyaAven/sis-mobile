@@ -55,6 +55,9 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx.v220)
     implementation(libs.coil.compose)
     implementation(libs.androidx.constraintlayout)
+    implementation(platform(libs.androidx.compose.bom.v20240600))
+    implementation(libs.material3)
+    implementation (libs.androidx.material.icons.extended)
 
 
     implementation(libs.androidx.core.ktx)
@@ -74,5 +77,6 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
 
 }

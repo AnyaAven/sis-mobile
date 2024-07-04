@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.lazy.LazyColumn
@@ -33,6 +34,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -241,6 +245,7 @@ fun LoginScreen(viewModel: LoginViewModel) {
 
         var username by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
+        val passwordVisualTransformation = remember { PasswordVisualTransformation() }
 
         if (painter.state is AsyncImagePainter.State.Loading) {
             CircularProgressIndicator()
@@ -264,6 +269,7 @@ fun LoginScreen(viewModel: LoginViewModel) {
             value = password,
             onValueChange = { password = it },
             placeholder = { Text("Password") },
+            visualTransformation = passwordVisualTransformation,
             modifier = Modifier.padding(16.dp),
             singleLine = true,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
