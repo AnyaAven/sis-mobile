@@ -9,9 +9,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -26,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
@@ -38,13 +41,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
+import coil.compose.AsyncImagePainter
+import coil.compose.AsyncImagePainter.State.Empty.painter
 import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
 import com.example.api.ui.theme.APITheme
 import kotlinx.coroutines.launch
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.Headers
 import retrofit2.http.POST
 
@@ -78,7 +85,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Observe login state and perform actions accordingly
         viewModel.loginState.observe(this, Observer { loginState ->
             when (loginState) {
                 is LoginViewModel.LoginState.Loading -> {
@@ -174,14 +180,13 @@ data class LoginRequest(
 )
 
 interface AuthService {
-    @POST("-token")
+    @POST("-token/")
     suspend fun loginUser(@Body loginRequest: LoginRequest): AuthResponse
 }
 
 interface EventService {
-    @Headers("Authorization: Token 1876a0415265139fc3cddca821049590f6bf9544")
-    @GET("events")
-    suspend fun getEvents(token: String): EventResponse
+    @GET("events/")
+    suspend fun getEvents(@Header("Authorization") token: String): EventResponse
 }
 
 @Composable
@@ -215,6 +220,18 @@ fun EventItem(event: Event) {
 
 @Composable
 fun LoginScreen(viewModel: LoginViewModel) {
+
+
+    val overlayImage =
+        "https://www.rithmschool.com/wp-content/uploads/2023/03/Square-rithm-logo.png"
+
+    val painter = rememberAsyncImagePainter(
+        model = ImageRequest.Builder(LocalContext.current)
+            .data(overlayImage)
+            .size(coil.size.Size.ORIGINAL) // Set the target size to load the image at.
+            .build()
+    )
+
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
@@ -224,6 +241,16 @@ fun LoginScreen(viewModel: LoginViewModel) {
 
         var username by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
+
+        if (painter.state is AsyncImagePainter.State.Loading) {
+            CircularProgressIndicator()
+        } else {
+            Image(
+                painter = painter,
+                contentScale = ContentScale.Crop,
+                contentDescription = "photo"
+            )
+        }
 
         TextField(
             value = username,
