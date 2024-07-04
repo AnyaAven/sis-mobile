@@ -70,7 +70,7 @@ import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var serviceEvents: EventService
+    private lateinit var serviceCurrics: CurricService
     private val viewModel: LoginViewModel by viewModels()
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -78,12 +78,12 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Initialize Retrofit service for events
-        serviceEvents = Retrofit.Builder()
+        // Initialize Retrofit service for currics
+        serviceCurrics = Retrofit.Builder()
             .baseUrl("http://10.0.2.2:8000/api/")
             .addConverterFactory(MoshiConverterFactory.create())
             .build()
-            .create(EventService::class.java)
+            .create(CurricService::class.java)
 
         // Observe ViewModel or handle login logic here
         handleLogin()
@@ -96,46 +96,55 @@ class MainActivity : AppCompatActivity() {
         val composeView = findViewById<ComposeView>(R.id.compose_view)
         composeView.setContent {
             APITheme {
-                LoginScreen(viewModel)
+                LoginScreen(
+                    viewModel,
+                    viewModel.loginState.value ?: LoginState.Loading
+                )
             }
         }
 
         viewModel.loginState.observe(this, Observer { loginState ->
             when (loginState) {
-                is LoginViewModel.LoginState.Loading -> {
+                is LoginState.Loading -> {
                     // Show loading indicator or handle UI state
                 }
 
-                is LoginViewModel.LoginState.Success -> {
+                is LoginState.Success -> {
                     val token = loginState.token
-                    fetchEvents(token)
+                    fetchCurricItems(token)
                 }
 
-                is LoginViewModel.LoginState.Error -> {
-
+                is LoginState.Error -> {
                     Log.e("TAG_HANDLE_LOGIN_ERROR", "Login failed: ${loginState.error.message}")
+                }
+            }
+
+            val composeView = findViewById<ComposeView>(R.id.compose_view)
+            composeView.setContent {
+                APITheme {
+                    LoginScreen(viewModel, loginState)
                 }
             }
         })
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    private fun fetchEvents(token: String) {
+    private fun fetchCurricItems(token: String) {
         lifecycleScope.launch {
             try {
-                val eventsResponse = serviceEvents.getEvents("Token $token")
-                val events = eventsResponse.homepage
-                Log.d("TAG_", "Events: $events")
+                val curricResponse = serviceCurrics.getCurrics("Token $token")
+                val currics = curricResponse.homepage
+                Log.d("TAG_", "Currics: $currics")
                 // Update UI with the fetched data
                 val composeView = findViewById<ComposeView>(R.id.compose_view)
                 composeView.setContent {
                     APITheme {
-                        MainContent(events)
+                        MainContent(currics)
                     }
                 }
             } catch (e: Exception) {
 
-                Log.e("TAG_fetchEvents", "Error fetching events", e)
+                Log.e("TAG_fetchCurrics", "Error fetching currics", e)
             }
         }
     }
@@ -176,15 +185,15 @@ class LoginViewModel : ViewModel() {
     }
 }
 
-data class Event(
+data class Curric(
     val start_at: String,
     val title: String,
     val description: String,
     val dri_id: String
 )
 
-data class EventResponse(
-    val homepage: List<Event>
+data class CurricResponse(
+    val homepage: List<Curric>
 )
 
 data class AuthResponse(
@@ -201,38 +210,21 @@ interface AuthService {
     suspend fun loginUser(@Body loginRequest: LoginRequest): AuthResponse
 }
 
-interface EventService {
+interface CurricService {
     @GET("cohorts/r99/homepage/")
-    suspend fun getEvents(@Header("Authorization") token: String): EventResponse
+    suspend fun getCurrics(@Header("Authorization") token: String): CurricResponse
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun MainContent(events: List<Event>) {
-    Column(modifier = Modifier.fillMaxSize()) {
-//        EventList(events, modifier = Modifier.weight(1f))
-        //    CurricListing(modifier = Modifier.weight(1f))
-    }
-    CurricListing(events)
-}
-
-@Composable
-fun EventList(events: List<Event>, modifier: Modifier = Modifier) {
-    Scaffold(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        LazyColumn(modifier = Modifier.padding(it)) {
-            items(events) { event ->
-                EventItem(event)
-            }
-        }
-    }
+fun MainContent(currics: List<Curric>) {
+    CurricListing(currics)
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun CurricListing(events: List<Event>, modifier: Modifier = Modifier) {
-    TableScreen(events, modifier)
+fun CurricListing(currics: List<Curric>, modifier: Modifier = Modifier) {
+    TableScreen(currics, modifier)
 }
 
 @SuppressLint("ModifierFactoryUnreferencedReceiver")
@@ -257,7 +249,7 @@ fun Modifier.bottomBorder(strokeWidth: Dp, color: Color) = composed(
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun TableScreen(events: List<Event>, modifier: Modifier = Modifier) {
+fun TableScreen(currics: List<Curric>, modifier: Modifier = Modifier) {
     // Just a fake data... a Pair of Int and String
     val tableData = (1..100).mapIndexed { index, item ->
         index to "Item $index"
@@ -284,16 +276,16 @@ fun TableScreen(events: List<Event>, modifier: Modifier = Modifier) {
             }
         }
         // Here are all the lines of your table.
-        items(events) { event ->
+        items(currics) { curric ->
             var formattedDate = ""
             try {
-                var index = event.start_at.indexOf(".") - 1
-                if (index < 0) index = event.start_at.indexOf("Z") - 1
-                val date = LocalDateTime.parse(event.start_at.slice(0..index))
+                var index = curric.start_at.indexOf(".") - 1
+                if (index < 0) index = curric.start_at.indexOf("Z") - 1
+                val date = LocalDateTime.parse(curric.start_at.slice(0..index))
                 var dayOfWeek = date.dayOfWeek.toString().lowercase().slice(0..2)
                     .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
                 dayOfWeek = "$dayOfWeek."
-                val localTime = LocalDateTime.parse(event.start_at.slice(0..index))
+                val localTime = LocalDateTime.parse(curric.start_at.slice(0..index))
                 val hour = localTime.hour.toString()
                 val minutes = localTime.minute.toString()
                 val time = "$hour:$minutes"
@@ -301,10 +293,10 @@ fun TableScreen(events: List<Event>, modifier: Modifier = Modifier) {
                     dayOfWeek + " " + date.monthValue.toString() + "/" + date.dayOfMonth.toString() + " " + time
             } catch (e: Exception) {
 
-                Log.e("TAG_TIME", "Parse time failure $event", e)
+                Log.e("TAG_TIME", "Parse time failure $curric", e)
             }
 
-            if(formattedDate == "") formattedDate = "Tue, 6/12 6:15"
+            if (formattedDate == "") formattedDate = "Tue, 6/12 6:15"
 
             Row(
                 modifier = Modifier
@@ -312,8 +304,8 @@ fun TableScreen(events: List<Event>, modifier: Modifier = Modifier) {
                     .bottomBorder(1.dp, LightGray)
             ) {
                 TableCell(text = formattedDate, weight = column1Weight)
-                TableCell(text = event.title + "\n" + event.description, weight = column2Weight)
-                TableCell(text = event.dri_id, weight = column3Weight)
+                TableCell(text = curric.title + "\n" + curric.description, weight = column2Weight)
+                TableCell(text = curric.dri_id, weight = column3Weight)
             }
         }
     }
@@ -334,17 +326,17 @@ fun RowScope.TableCell(
 }
 
 @Composable
-fun EventItem(event: Event) {
+fun CurricItem(curric: Curric) {
     Column(modifier = Modifier.padding(8.dp)) {
-        Text(text = " ${event.start_at}", style = MaterialTheme.typography.bodyLarge)
-        Text(text = " ${event.title}", style = MaterialTheme.typography.bodyLarge)
-        Text(text = " ${event.description}", style = MaterialTheme.typography.bodyLarge)
-        Text(text = " ${event.dri_id}", style = MaterialTheme.typography.bodyLarge)
+        Text(text = " ${curric.start_at}", style = MaterialTheme.typography.bodyLarge)
+        Text(text = " ${curric.title}", style = MaterialTheme.typography.bodyLarge)
+        Text(text = " ${curric.description}", style = MaterialTheme.typography.bodyLarge)
+        Text(text = " ${curric.dri_id}", style = MaterialTheme.typography.bodyLarge)
     }
 }
 
 @Composable
-fun LoginScreen(viewModel: LoginViewModel) {
+fun LoginScreen(viewModel: LoginViewModel, loginState: LoginState) {
 
 
     val overlayImage =
@@ -376,6 +368,17 @@ fun LoginScreen(viewModel: LoginViewModel) {
                 contentScale = ContentScale.Crop,
                 contentDescription = "photo"
             )
+        }
+        when (loginState) {
+            is LoginState.Loading -> {
+//                CircularProgressIndicator()
+            }
+            is LoginState.Success -> {
+
+            }
+            is LoginState.Error -> {
+                Text("Login failed: Your username or password is incorrect.", color = Color.Red)
+            }
         }
 
         TextField(
@@ -410,9 +413,3 @@ fun LoginScreen(viewModel: LoginViewModel) {
         }
     }
 }
-
-//@Preview(showBackground = true)
-//@Composable
-//fun EventItemPreview() {
-//    EventItem(Event("Event title", "published"))
-//}
