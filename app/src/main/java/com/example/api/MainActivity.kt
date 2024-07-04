@@ -5,6 +5,8 @@ import android.util.Log
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -27,17 +29,24 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Color.Companion.DarkGray
+import androidx.compose.ui.graphics.Color.Companion.LightGray
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
@@ -194,14 +203,15 @@ interface EventService {
 
 @Composable
 fun MainContent(events: List<Event>) {
-    Column {
-        EventList(events)
-        Spacer(modifier = Modifier.height(16.dp))
+    Column(modifier = Modifier.fillMaxSize()) {
+//        EventList(events, modifier = Modifier.weight(1f))
+    //    CurricListing(modifier = Modifier.weight(1f))
     }
+    CurricListing()
 }
 
 @Composable
-fun EventList(events: List<Event>) {
+fun EventList(events: List<Event>, modifier: Modifier = Modifier) {
     Scaffold(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -213,6 +223,83 @@ fun EventList(events: List<Event>) {
     }
 }
 
+@Composable
+fun CurricListing(modifier: Modifier = Modifier){
+    TableScreen(modifier)
+}
+
+fun Modifier.bottomBorder(strokeWidth: Dp, color: Color) = composed(
+    factory = {
+        val density = LocalDensity.current
+        val strokeWidthPx = density.run { strokeWidth.toPx() }
+
+        Modifier.drawBehind {
+            val width = size.width
+            val height = size.height - strokeWidthPx/2
+
+            drawLine(
+                color = color,
+                start = Offset(x = 0f, y = height),
+                end = Offset(x = width , y = height),
+                strokeWidth = strokeWidthPx
+            )
+        }
+    }
+)
+
+@Composable
+fun TableScreen(modifier: Modifier = Modifier) {
+    // Just a fake data... a Pair of Int and String
+    val tableData = (1..100).mapIndexed { index, item ->
+        index to "Item $index"
+    }
+    // Each cell of a column must have the same weight.
+    val column1Weight = .2f // 20%
+    val column2Weight = .6f // 60%
+    val column3Weight = .2f // 20%
+    // The LazyColumn will be our table. Notice the use of the weights below
+    LazyColumn(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(16.dp)) {
+        // Here is the header
+        item {
+            Row(modifier = modifier
+                .bottomBorder(2.dp, DarkGray)
+            ) {
+                TableCell(text = "Date", weight = column1Weight)
+                TableCell(text = "Title", weight = column2Weight)
+                TableCell(text = "Staff", weight = column3Weight)
+            }
+        }
+        // Here are all the lines of your table.
+        items(tableData) {
+            val (id, text) = it
+            Row(modifier = Modifier
+                .fillMaxWidth()
+                .bottomBorder(1.dp, LightGray)
+            ) {
+                TableCell(text = id.toString(), weight = column1Weight)
+                TableCell(text = text, weight = column2Weight)
+                TableCell(text = text, weight = column3Weight)
+            }
+        }
+    }
+}
+
+@Composable
+fun RowScope.TableCell(
+    text: String,
+    weight: Float
+) {
+    Text(
+        text = text,
+        Modifier
+//            .border(1.dp, Color.Black)
+            .weight(weight)
+            .padding(8.dp)
+    )
+}
 
 @Composable
 fun EventItem(event: Event) {
