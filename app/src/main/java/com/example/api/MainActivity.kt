@@ -110,7 +110,7 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 val eventsResponse = serviceEvents.getEvents("Token $token")
-                val events = eventsResponse.results
+                val events = eventsResponse.homepage
                 Log.d("TAG_", "Events: $events")
                 // Update UI with the fetched data
                 val composeView = findViewById<ComposeView>(R.id.compose_view)
@@ -163,15 +163,14 @@ class LoginViewModel : ViewModel() {
 }
 
 data class Event(
+    val start_at: String,
     val title: String,
-    val status: String
+    val description: String,
+    val dri_id: String
 )
 
 data class EventResponse(
-    val count: Int,
-    val next: String?,
-    val previous: String?,
-    val results: List<Event>
+    val homepage: List<Event>
 )
 
 data class AuthResponse(
@@ -189,7 +188,7 @@ interface AuthService {
 }
 
 interface EventService {
-    @GET("events/")
+    @GET("cohorts/r99/homepage/")
     suspend fun getEvents(@Header("Authorization") token: String): EventResponse
 }
 
@@ -218,7 +217,10 @@ fun EventList(events: List<Event>) {
 @Composable
 fun EventItem(event: Event) {
     Column(modifier = Modifier.padding(8.dp)) {
-        Text(text = "Title ${event.title}", style = MaterialTheme.typography.bodyLarge)
+        Text(text = " ${event.start_at}", style = MaterialTheme.typography.bodyLarge)
+        Text(text = " ${event.title}", style = MaterialTheme.typography.bodyLarge)
+        Text(text = " ${event.description}", style = MaterialTheme.typography.bodyLarge)
+        Text(text = " ${event.dri_id}", style = MaterialTheme.typography.bodyLarge)
     }
 }
 
@@ -290,8 +292,8 @@ fun LoginScreen(viewModel: LoginViewModel) {
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun EventItemPreview() {
-    EventItem(Event("Event title", "published"))
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun EventItemPreview() {
+//    EventItem(Event("Event title", "published"))
+//}
