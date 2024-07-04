@@ -287,7 +287,8 @@ fun TableScreen(events: List<Event>, modifier: Modifier = Modifier) {
         items(events) { event ->
             var formattedDate = ""
             try {
-                val index = event.start_at.indexOf(".") - 1
+                var index = event.start_at.indexOf(".") - 1
+                if (index < 0) index = event.start_at.indexOf("Z") - 1
                 val date = LocalDateTime.parse(event.start_at.slice(0..index))
                 var dayOfWeek = date.dayOfWeek.toString().lowercase().slice(0..2)
                     .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
