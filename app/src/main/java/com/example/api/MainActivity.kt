@@ -41,10 +41,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.LiveData
@@ -67,6 +69,11 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Headers
 import retrofit2.http.POST
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
 
@@ -207,7 +214,7 @@ fun MainContent(events: List<Event>) {
 //        EventList(events, modifier = Modifier.weight(1f))
     //    CurricListing(modifier = Modifier.weight(1f))
     }
-    CurricListing()
+    CurricListing(events)
 }
 
 @Composable
@@ -224,8 +231,8 @@ fun EventList(events: List<Event>, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun CurricListing(modifier: Modifier = Modifier){
-    TableScreen(modifier)
+fun CurricListing(events: List<Event>, modifier: Modifier = Modifier){
+    TableScreen(events, modifier)
 }
 
 fun Modifier.bottomBorder(strokeWidth: Dp, color: Color) = composed(
@@ -248,15 +255,15 @@ fun Modifier.bottomBorder(strokeWidth: Dp, color: Color) = composed(
 )
 
 @Composable
-fun TableScreen(modifier: Modifier = Modifier) {
+fun TableScreen(events: List<Event>, modifier: Modifier = Modifier) {
     // Just a fake data... a Pair of Int and String
     val tableData = (1..100).mapIndexed { index, item ->
         index to "Item $index"
     }
     // Each cell of a column must have the same weight.
     val column1Weight = .2f // 20%
-    val column2Weight = .6f // 60%
-    val column3Weight = .2f // 20%
+    val column2Weight = .58f // 60%
+    val column3Weight = .22f // 20%
     // The LazyColumn will be our table. Notice the use of the weights below
     LazyColumn(
         modifier = modifier
@@ -273,15 +280,26 @@ fun TableScreen(modifier: Modifier = Modifier) {
             }
         }
         // Here are all the lines of your table.
-        items(tableData) {
-            val (id, text) = it
+        items(events) { event ->
+//            val (id, text) = it
+//            val firstApiFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+            val index = event.start_at.indexOf(".") - 1
+            val date = LocalDateTime.parse(event.start_at.slice(0..index))
+            var dayOfWeek = date.dayOfWeek.toString().lowercase().slice(0..2)
+                .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+            dayOfWeek = "$dayOfWeek."
+            val localTime = LocalDateTime.parse(event.start_at.slice(0..index))
+            val hour = localTime.hour.toString()
+            val minutes = localTime.minute.toString()
+            val time = "$hour:$minutes"
+            val formattedDate = dayOfWeek + " " + date.monthValue.toString() + "/" + date.dayOfMonth.toString() + " " + time
             Row(modifier = Modifier
                 .fillMaxWidth()
                 .bottomBorder(1.dp, LightGray)
             ) {
-                TableCell(text = id.toString(), weight = column1Weight)
-                TableCell(text = text, weight = column2Weight)
-                TableCell(text = text, weight = column3Weight)
+                TableCell(text = formattedDate, weight = column1Weight)
+                TableCell(text = event.title + "\n" + event.description, weight = column2Weight)
+                TableCell(text = event.dri_id, weight = column3Weight)
             }
         }
     }
